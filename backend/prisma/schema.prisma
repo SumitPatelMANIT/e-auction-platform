@@ -1,0 +1,154 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  user_id      Int            @id @default(autoincrement())
+  first_name   String
+  middle_name  String?
+  last_name    String
+  email        String         @unique
+  password     String
+  role         String         // e.g. 'ADMIN', 'BIDDER', 'SELLER'
+  dob          DateTime?
+  profile_picture String?
+  
+  // Address Composite
+  house_no     String?
+  street       String?
+  city         String?
+  state        String?
+  country      String?
+  pin_code     String?
+
+  // Relations
+  phones         UserPhone[]
+  notifications  Notification[]
+  tickets        Ticket[]
+  items          Item[]
+  auctions       Auction[]
+  bids           Bid[]
+  orders         Order[]
+  registrations  AuctionRegistration[]
+}
+
+model UserPhone {
+  phone_id     Int    @id @default(autoincrement())
+  user_id      Int
+  phone_number String
+  
+  user         User   @relation(fields: [user_id], references: [user_id])
+}
+
+model Notification {
+  notification_id Int      @id @default(autoincrement())
+  user_id         Int
+  message         String
+  sent_at         DateTime @default(now())
+
+  user            User     @relation(fields: [user_id], references: [user_id])
+}
+
+model Ticket {
+  ticket_id    Int       @id @default(autoincrement())
+  user_id      Int
+  subject      String
+  description  String
+  status       String
+  created_at   DateTime  @default(now())
+  closed_at    DateTime?
+
+  user         User      @relation(fields: [user_id], references: [user_id])
+}
+
+model Catalogue {
+  catalogue_id   Int      @id @default(autoincrement())
+  catalogue_name String
+  description    String?
+
+  items          Item[]
+}
+
+model Item {
+  item_id      Int       @id @default(autoincrement())
+  seller_id    Int
+  catalogue_id Int?
+  title        String
+  description  String?
+  base_price   Float
+  status       String
+  image_url    String?
+  created_at   DateTime  @default(now())
+
+  seller       User      @relation(fields: [seller_id], references: [user_id])
+  catalogue    Catalogue? @relation(fields: [catalogue_id], references: [catalogue_id])
+  auction      Auction?
+}
+
+model Auction {
+  auction_id    Int      @id @default(autoincrement())
+  item_id       Int      @unique
+  creator_id    Int
+  start_time    DateTime
+  end_time      DateTime
+  min_increment Float
+  status        String
+
+  item          Item     @relation(fields: [item_id], references: [item_id])
+  creator       User     @relation(fields: [creator_id], references: [user_id])
+  bids          Bid[]
+  order         Order?
+  registrations AuctionRegistration[]
+}
+
+model Bid {
+  bid_id        Int      @id @default(autoincrement())
+  user_id       Int
+  auction_id    Int
+  bid_amount    Float
+  bid_time      DateTime @default(now())
+
+  user          User     @relation(fields: [user_id], references: [user_id])
+  auction       Auction  @relation(fields: [auction_id], references: [auction_id])
+}
+
+model Order {
+  order_id      Int       @id @default(autoincrement())
+  user_id       Int
+  auction_id    Int       @unique
+  final_price   Float
+  order_status  String
+  order_date    DateTime  @default(now())
+
+  user          User      @relation(fields: [user_id], references: [user_id])
+  auction       Auction   @relation(fields: [auction_id], references: [auction_id])
+  payment       Payment?
+}
+
+model Payment {
+  payment_id     Int      @id @default(autoincrement())
+  order_id       Int      @unique
+  payment_mode   String
+  payment_status String
+  paid_amount    Float
+  payment_date   DateTime @default(now())
+
+  order          Order    @relation(fields: [order_id], references: [order_id])
+}
+
+model AuctionRegistration {
+  registration_id Int      @id @default(autoincrement())
+  user_id         Int
+  auction_id      Int
+  registered_at   DateTime @default(now())
+
+  user            User     @relation(fields: [user_id], references: [user_id])
+  auction         Auction  @relation(fields: [auction_id], references: [auction_id])
+
+  @@unique([user_id, auction_id])
+}

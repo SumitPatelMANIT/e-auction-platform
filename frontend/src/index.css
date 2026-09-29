@@ -1,0 +1,38 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --bg-base: #f8fafc; /* slate-50 */
+    --bg-surface: rgba(255, 255, 255, 0.7); /* translucent white */
+    --bg-surface-hover: rgba(255, 255, 255, 0.9);
+    --text-primary: #0f172a; /* slate-900 */
+    --text-secondary: #475569; /* slate-600 */
+    --border-subtle: rgba(99, 102, 241, 0.15); /* light teal border */
+  }
+
+  body {
+    @apply antialiased text-slate-900 bg-slate-50 min-h-screen selection:bg-teal-500/30 selection:text-teal-900;
+    /* Add a subtle bright radial gradient mesh to the background */
+    background-image: 
+      radial-gradient(at 0% 0%, hsla(226, 100%, 97%, 1) 0, transparent 50%), 
+      radial-gradient(at 50% 0%, hsla(245, 100%, 95%, 0.8) 0, transparent 50%), 
+      radial-gradient(at 100% 0%, hsla(280, 100%, 97%, 1) 0, transparent 50%);
+    background-attachment: fixed;
+  }
+}
+
+@layer utilities {
+  .glass-panel {
+    @apply bg-[var(--bg-surface)] backdrop-blur-xl border border-white/60 rounded-2xl shadow-[0_8px_32px_0_rgba(31,38,135,0.07)];
+  }
+  
+  .glass-panel-hover {
+    @apply hover:bg-[var(--bg-surface-hover)] hover:shadow-[0_12px_40px_0_rgba(20,184,166,0.15)] hover:border-teal-200 transition-all duration-300;
+  }
+
+  .text-gradient {
+    @apply bg-clip-text text-transparent bg-teal-600;
+  }
+}
