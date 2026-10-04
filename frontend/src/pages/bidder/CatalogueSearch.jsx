@@ -12,6 +12,14 @@ const CatalogueSearch = () => {
   const [bidAmount, setBidAmount] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [bidError, setBidError] = useState('');
+  const [now, setNow] = useState(new Date());
+
+  React.useEffect(() => {
+    const timer = setInterval(() => {
+      setNow(new Date());
+    }, 1000);
+    return () => clearInterval(timer);
+  }, []);
 
   // Simple client-side filtering logic
   let filteredItems = activeItems.filter(item => 
@@ -59,7 +67,7 @@ const CatalogueSearch = () => {
   const handleQuickBid = (increment) => {
     const highestBid = getHighestBid(selectedItem.id);
     const currentPrice = highestBid ? highestBid.amount : selectedItem.basePrice;
-    setBidAmount(currentPrice + increment);
+    setBidAmount(prev => (prev ? Number(prev) + increment : currentPrice + increment));
   };
 
   const filters = ['All', 'Ending Soon', 'High Value', 'Recently Added'];
@@ -183,13 +191,27 @@ const CatalogueSearch = () => {
                     <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold bg-slate-900/70 text-white backdrop-blur-md">
                       <Clock className="h-3 w-3 mr-1" />
                       {(() => {
-                        if (!item.auctionEnd) return "TBD";
-                        const diff = new Date(item.auctionEnd) - new Date();
-                        if (diff <= 0) return "Ended";
-                        const hours = Math.floor(diff / (1000 * 60 * 60));
-                        const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-                        if (hours > 24) return `${Math.floor(hours / 24)}d ${hours % 24}h`;
-                        return `${hours}h ${minutes}m`;
+                        if (item.status === 'SCHEDULED') {
+                          if (!item.auctionStart) return "TBD";
+                          const diff = new Date(item.auctionStart) - now;
+                          if (diff <= 0) return "Starting soon";
+                          const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+                          const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                          const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+                          const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+                          if (days > 0) return `Starts in ${days}d ${hours}h ${minutes}m ${seconds}s`;
+                          return `Starts in ${hours}h ${minutes}m ${seconds}s`;
+                        } else {
+                          if (!item.auctionEnd) return "TBD";
+                          const diff = new Date(item.auctionEnd) - now;
+                          if (diff <= 0) return "Ended";
+                          const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+                          const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                          const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+                          const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+                          if (days > 0) return `Ends in ${days}d ${hours}h ${minutes}m ${seconds}s`;
+                          return `Ends in ${hours}h ${minutes}m ${seconds}s`;
+                        }
                       })()}
                     </span>
                   </div>
@@ -342,7 +364,7 @@ const CatalogueSearch = () => {
                             onClick={() => handleQuickBid(inc)}
                             className="py-2 px-3 border border-cyan-200 rounded-lg text-sm font-bold text-cyan-700 bg-cyan-50 hover:bg-cyan-100 transition-colors"
                           >
-                            +${inc}
+                            +₹{inc}
                           </button>
                         ))}
                       </div>

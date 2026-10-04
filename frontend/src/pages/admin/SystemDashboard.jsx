@@ -1,10 +1,11 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import { useAuction } from '../../context/AuctionContext';
 import { Activity, Users, IndianRupee, Package, ArrowUpRight, TrendingUp, Clock, Gavel, CheckCircle, AlertCircle, ArrowRight, RefreshCw } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 const SystemDashboard = () => {
   const { items, bids, dashboardStats, getHighestBid, refreshData, isLoading } = useAuction();
+  const [showAllBids, setShowAllBids] = useState(false);
 
   // Basic Metrics from Backend
   const totalItems = items.length;
@@ -210,9 +211,9 @@ const SystemDashboard = () => {
               ) : (
                 <div className="flow-root">
                   <ul role="list" className="-mb-8">
-                    {bids.slice().reverse().slice(0, 6).map((bid, bidIdx) => {
+                    {[...bids].sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp)).slice(0, showAllBids ? bids.length : 6).map((bid, bidIdx, arr) => {
                       const item = items.find(i => i.id === bid.itemId);
-                      const isLast = bidIdx === Math.min(bids.length, 6) - 1;
+                      const isLast = bidIdx === arr.length - 1;
                       
                       return (
                         <li key={bid.id}>
@@ -253,8 +254,11 @@ const SystemDashboard = () => {
             </div>
             
             <div className="p-4 bg-slate-50 border-t border-slate-100 text-center">
-              <button className="text-sm font-bold text-teal-600 hover:text-teal-700 transition-colors">
-                View All Activity &rarr;
+              <button 
+                onClick={() => setShowAllBids(!showAllBids)}
+                className="text-sm font-bold text-teal-600 hover:text-teal-700 transition-colors"
+              >
+                {showAllBids ? 'Show Less Activity \u2191' : 'View All Activity \u2192'}
               </button>
             </div>
           </div>

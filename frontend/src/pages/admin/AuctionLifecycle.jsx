@@ -1,9 +1,9 @@
 import React, { useState, useMemo } from 'react';
-import { Calendar, IndianRupee, Package, Settings2, Clock, CheckCircle, Search, Filter, AlertCircle, ArrowRight, Eye } from 'lucide-react';
+import { Calendar, IndianRupee, Package, Settings2, Clock, CheckCircle, Search, Filter, AlertCircle, ArrowRight, Eye, RefreshCw } from 'lucide-react';
 import { useAuction } from '../../context/AuctionContext';
 
 const AuctionLifecycle = () => {
-  const { items, scheduleAuction, getHighestBid } = useAuction();
+  const { items, scheduleAuction, getHighestBid, refreshData, isLoading } = useAuction();
   
   const [activeTab, setActiveTab] = useState('PENDING_AUCTION');
   const [searchTerm, setSearchTerm] = useState('');
@@ -81,18 +81,30 @@ const AuctionLifecycle = () => {
           </p>
         </div>
         
-        {/* Search */}
-        <div className="w-full md:w-80 relative flex items-center">
-          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-            <Search className="h-5 w-5 text-slate-400" />
+        <div className="flex items-center gap-4 w-full md:w-auto flex-col sm:flex-row">
+          {/* Search */}
+          <div className="w-full sm:w-80 relative flex items-center">
+            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+              <Search className="h-5 w-5 text-slate-400" />
+            </div>
+            <input
+              type="text"
+              className="block w-full pl-10 pr-3 py-2.5 bg-white border border-slate-200 rounded-xl text-sm placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition-colors shadow-sm"
+              placeholder="Search items or sellers..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
           </div>
-          <input
-            type="text"
-            className="block w-full pl-10 pr-3 py-2.5 bg-white border border-slate-200 rounded-xl text-sm placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition-colors shadow-sm"
-            placeholder="Search items or sellers..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
+
+          {/* Refresh Button */}
+          <button
+            onClick={() => refreshData()}
+            disabled={isLoading}
+            className="w-full sm:w-auto inline-flex justify-center items-center px-4 py-2.5 border border-slate-200 shadow-sm text-sm font-bold rounded-xl text-slate-700 bg-white hover:bg-slate-50 focus:outline-none transition-all disabled:opacity-50"
+            title="Refresh Data"
+          >
+            <RefreshCw className={`h-5 w-5 ${isLoading ? 'animate-spin text-teal-600' : 'text-slate-500'}`} aria-hidden="true" />
+          </button>
         </div>
       </div>
 

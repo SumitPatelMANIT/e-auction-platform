@@ -27,6 +27,10 @@ const Login = () => {
         body: JSON.stringify({ email, password }),
       });
 
+      if (data.role !== activeTab) {
+        throw new Error('Please select the correct role to login.');
+      }
+
       // Save token
       localStorage.setItem('token', data.token);
 

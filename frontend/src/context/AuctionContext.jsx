@@ -125,6 +125,7 @@ export const AuctionProvider = ({ children }) => {
           seller: a.creator?.first_name || 'Seller',
           basePrice: a.item?.base_price || 0,
           status: a.status,
+          auctionStart: a.start_time,
           auctionEnd: a.end_time,
           minIncrement: a.min_increment,
           imageUrl: 'https://images.unsplash.com/photo-1579548122080-c35fd6820ecb?w=500&q=80',
@@ -134,6 +135,7 @@ export const AuctionProvider = ({ children }) => {
         const mapItem = (i) => ({
           id: i.item_id,
           auction_id: i.auction?.auction_id,
+          auctionStart: i.auction?.start_time,
           auctionEnd: i.auction?.end_time,
           title: i.title,
           description: i.description,
@@ -162,13 +164,15 @@ export const AuctionProvider = ({ children }) => {
             return {
               id: item.item_id,
               auction_id: a.auction_id,
+              auctionStart: a.start_time,
               auctionEnd: a.end_time,
               title: item.title,
               description: item.description,
               seller: 'Seller', // Fallback since bidder auctions query doesn't include seller details
               basePrice: item.base_price,
               status: a.status === 'SCHEDULED' ? 'SCHEDULED' : 'ACTIVE',
-              imageUrl: item.image_url || 'https://images.unsplash.com/photo-1523170335258-f5ed11844a49?w=500&q=80'
+              imageUrl: item.image_url || 'https://images.unsplash.com/photo-1523170335258-f5ed11844a49?w=500&q=80',
+              minIncrement: a.min_increment
             };
           }));
           
@@ -192,13 +196,15 @@ export const AuctionProvider = ({ children }) => {
               biddedItemsMap.set(b.auction.item_id, {
                 id: b.auction.item_id,
                 auction_id: b.auction_id,
+                auctionStart: b.auction.start_time,
                 auctionEnd: b.auction.end_time,
                 title: b.auction.item.title,
                 description: b.auction.item.description,
                 seller: 'Seller',
                 basePrice: b.auction.item.base_price,
                 status: b.auction.status === 'SCHEDULED' ? 'SCHEDULED' : (b.auction.status === 'ACTIVE' ? 'ACTIVE' : 'COMPLETED'),
-                imageUrl: b.auction.item.image_url || 'https://images.unsplash.com/photo-1523170335258-f5ed11844a49?w=500&q=80'
+                imageUrl: b.auction.item.image_url || 'https://images.unsplash.com/photo-1523170335258-f5ed11844a49?w=500&q=80',
+                minIncrement: b.auction.min_increment
               });
               
               // Also map the overall highest bid for this auction if it's not by this user
