@@ -1,14 +1,47 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { User, Mail, Lock, Shield, ArrowRight, ArrowLeft, Gavel, Package, Phone, Calendar, Home, MapPin, CheckCircle2 } from 'lucide-react';
+import { User, Mail, Lock, Shield, ArrowRight, ArrowLeft, Gavel, Package, Phone, Calendar, Home, MapPin, CheckCircle2, AlertCircle } from 'lucide-react';
 import { useAuction } from '../../context/AuctionContext';
 
 import { apiFetch } from '../../utils/api';
+
+const calculateAge = (dobString) => {
+  if (!dobString) return null;
+  const parts = dobString.split('-');
+  if (parts.length !== 3) return null;
+  const birthYear = parseInt(parts[0], 10);
+  const birthMonth = parseInt(parts[1], 10) - 1;
+  const birthDay = parseInt(parts[2], 10);
+
+  const today = new Date();
+  const currentYear = today.getFullYear();
+  const currentMonth = today.getMonth();
+  const currentDay = today.getDate();
+
+  let age = currentYear - birthYear;
+  const monthDiff = currentMonth - birthMonth;
+
+  if (monthDiff < 0 || (monthDiff === 0 && currentDay < birthDay)) {
+    age--;
+  }
+
+  return age;
+};
+
+const getMaxDob = () => {
+  const today = new Date();
+  const year = today.getFullYear() - 18;
+  const month = String(today.getMonth() + 1).padStart(2, '0');
+  const day = String(today.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
 
 const Register = () => {
   const [currentStep, setCurrentStep] = useState(1);
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [error, setError] = useState('');
+  const [dobError, setDobError] = useState('');
+  const maxDobDate = useMemo(() => getMaxDob(), []);
   const [formData, setFormData] = useState({
     firstName: '',
     middleName: '',
@@ -34,8 +67,49 @@ const Register = () => {
 
   const totalSteps = 4;
 
+  const handleDobChange = (e) => {
+    const selectedDob = e.target.value;
+    setFormData(prev => ({ ...prev, dob: selectedDob }));
+
+    if (!selectedDob) {
+      setDobError('Date of birth is required.');
+      return;
+    }
+
+    const age = calculateAge(selectedDob);
+    if (age === null || isNaN(age)) {
+      setDobError('Please enter a valid date of birth.');
+    } else if (age < 0) {
+      setDobError('Date of birth cannot be in the future.');
+    } else if (age < 18) {
+      setDobError('You must be at least 18 years old to register.');
+    } else {
+      setDobError('');
+      if (error && error.includes('18 years')) {
+        setError('');
+      }
+    }
+  };
+
   const handleNext = (e) => {
     e.preventDefault();
+
+    if (currentStep === 2) {
+      if (!formData.dob) {
+        setDobError('Date of birth is required.');
+        setError('Please select your date of birth.');
+        return;
+      }
+      const age = calculateAge(formData.dob);
+      if (age === null || isNaN(age) || age < 18) {
+        setDobError('You must be at least 18 years old to register.');
+        setError('You must be at least 18 years old to register.');
+        return;
+      }
+      setDobError('');
+      setError('');
+    }
+
     if (currentStep < totalSteps) {
       setCurrentStep(curr => curr + 1);
     } else {
@@ -44,6 +118,7 @@ const Register = () => {
   };
 
   const handleBack = () => {
+    setError('');
     if (currentStep > 1) {
       setCurrentStep(curr => curr - 1);
     }
@@ -52,6 +127,14 @@ const Register = () => {
   const submitRegistration = async () => {
     if (formData.password !== formData.confirmPassword) {
       setError("Passwords do not match!");
+      return;
+    }
+
+    const age = calculateAge(formData.dob);
+    if (age === null || isNaN(age) || age < 18) {
+      setError('You must be at least 18 years old to register.');
+      setDobError('You must be at least 18 years old to register.');
+      setCurrentStep(2);
       return;
     }
     
@@ -278,13 +361,33 @@ const Register = () => {
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                   <div>
-                    <label className="block text-sm font-semibold text-slate-700 mb-1.5">Date of Birth *</label>
+                    <div className="flex justify-between items-center mb-1.5">
+                      <label className="block text-sm font-semibold text-slate-700">Date of Birth *</label>
+                      <span className="text-xs text-slate-500 font-medium">(Must be 18+)</span>
+                    </div>
                     <div className="relative rounded-xl shadow-sm">
                       <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                        <Calendar className="h-5 w-5 text-slate-400" />
+                        <Calendar className={`h-5 w-5 ${dobError ? 'text-rose-400' : 'text-slate-400'}`} />
                       </div>
-                      <input type="date" required value={formData.dob} onChange={(e) => setFormData({...formData, dob: e.target.value})} className="block w-full pl-10 bg-white border border-slate-300 text-slate-900 rounded-xl p-3 focus:ring-teal-500 focus:border-teal-500" />
+                      <input 
+                        type="date" 
+                        required 
+                        max={maxDobDate}
+                        value={formData.dob} 
+                        onChange={handleDobChange} 
+                        className={`block w-full pl-10 bg-white border text-slate-900 rounded-xl p-3 focus:outline-none transition-colors ${
+                          dobError 
+                            ? 'border-rose-500 focus:ring-2 focus:ring-rose-500 focus:border-rose-500 bg-rose-50/20' 
+                            : 'border-slate-300 focus:ring-teal-500 focus:border-teal-500'
+                        }`} 
+                      />
                     </div>
+                    {dobError && (
+                      <p className="mt-1.5 text-xs text-rose-600 font-semibold flex items-center">
+                        <AlertCircle className="h-4 w-4 mr-1 flex-shrink-0" />
+                        {dobError}
+                      </p>
+                    )}
                   </div>
                   <div>
                     <label className="block text-sm font-semibold text-slate-700 mb-1.5">Phone Number *</label>
@@ -443,7 +546,12 @@ const Register = () => {
 
               <button
                 type="submit"
-                className="inline-flex justify-center items-center py-3 px-8 border border-transparent rounded-xl shadow-sm text-sm font-bold text-white bg-teal-600  focus:outline-none transition-all transform hover:-translate-y-0.5"
+                disabled={currentStep === 2 && Boolean(dobError)}
+                className={`inline-flex justify-center items-center py-3 px-8 border border-transparent rounded-xl shadow-sm text-sm font-bold text-white transition-all transform ${
+                  currentStep === 2 && dobError
+                    ? 'bg-slate-400 cursor-not-allowed opacity-60'
+                    : 'bg-teal-600 hover:-translate-y-0.5 focus:outline-none'
+                }`}
               >
                 {currentStep < totalSteps ? (
                   <>

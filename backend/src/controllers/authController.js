@@ -16,6 +16,27 @@ export const registerUser = async (req, res) => {
   console.log('-------------------------------------');
 
   try {
+    // Validate DOB and age requirement (Must be at least 18 years old)
+    if (!dob) {
+      return res.status(400).json({ message: 'Date of birth is required' });
+    }
+
+    const birthDate = new Date(dob);
+    if (isNaN(birthDate.getTime())) {
+      return res.status(400).json({ message: 'Invalid date of birth' });
+    }
+
+    const today = new Date();
+    let age = today.getUTCFullYear() - birthDate.getUTCFullYear();
+    const monthDiff = today.getUTCMonth() - birthDate.getUTCMonth();
+    if (monthDiff < 0 || (monthDiff === 0 && today.getUTCDate() < birthDate.getUTCDate())) {
+      age--;
+    }
+
+    if (age < 18) {
+      return res.status(400).json({ message: 'You must be at least 18 years old to register' });
+    }
+
     // Check if user exists
     const userExists = await prisma.user.findUnique({
       where: { email },
